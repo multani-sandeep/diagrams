@@ -1,0 +1,632 @@
+direction: right
+
+# ============================================================================
+# CHANGELOG - Mobile Commerce Architecture
+# ============================================================================
+#
+# All notable changes to this architecture diagram are documented here.
+# Format based on Keep a Changelog (https://keepachangelog.com/en/1.0.0/)
+#
+# ----------------------------------------------------------------------------
+# [2026-01-03] - TO-BE Architecture Updates
+# ----------------------------------------------------------------------------
+#
+# ADDED:
+# ------
+# • New CRM Platform Integration
+#   - Component: New CRM Platform (Customer Master)
+#   - Integration Type: Account data replication
+#   - Trigger: Customer account creation event
+#   - Direction: Backend (.NET App Services) → New CRM Platform
+#
+#   Payload Schema:
+#   {
+#     "emailAddress": "string (required)",
+#     "contactPreferences": {
+#       "marketing": "boolean",
+#       "sms": "boolean",
+#       "email": "boolean",
+#       "push": "boolean"
+#     }
+#   }
+#
+#   Technical Details:
+#   - Protocol: REST JSON API
+#   - Authentication: OAuth 2.0
+#   - Purpose: Creates customer master record in CRM
+#   - Impacted Regions: All (East US, West Europe, Southeast Asia)
+#
+#   Business Justification:
+#   - Centralizes customer data in CRM platform
+#   - Enables marketing automation and customer segmentation
+#   - Supports GDPR compliance through centralized contact preferences
+#   - Provides single source of truth for customer contact information
+#
+# CHANGED:
+# --------
+# • Migration Details Summary - Updated to include three major changes:
+#   1. eCommerce Platform Migration (existing)
+#      - Product READ: XML → REST JSON
+#      - Account SYNC: SOAP → REST + OAuth 2.0
+#
+#   2. Loyalty Platform Migration (existing)
+#      - Response schema: +6 new attributes
+#      - Enhanced reward tracking & history
+#
+#   3. New CRM Platform Integration (NEW)
+#      - CREATE: Account replication to CRM
+#      - Payload: emailAddress, contactPreferences
+#
+# VISUAL UPDATES:
+# ---------------
+# • Added newCRM component (cylinder shape, teal #e1f5fe)
+# • Added connections from all Azure App Services to CRM
+# • Connection styled in teal (#00897b) for new integration
+# • Added 🆕 emoji indicator for new integrations
+# • Updated legend with "New Integration" category
+#
+# SCENARIO BEHAVIOR:
+# ------------------
+# • AS-IS: CRM component hidden (opacity: 0)
+# • TO-BE: CRM component visible with full opacity
+# • Legacy systems shown with reduced opacity (0.2) in TO-BE
+#
+# IMPLEMENTATION NOTES:
+# ---------------------
+# Backend Changes Required:
+# - Implement CRM client service for API communication
+# - Add OAuth 2.0 authentication flow for CRM platform
+# - Create account creation event handler
+# - Map customer data to CRM payload schema
+# - Implement retry logic and error handling
+# - Add monitoring and alerting for CRM integration
+#
+# Testing Considerations:
+# - Unit tests for payload mapping and validation
+# - Integration tests with CRM sandbox environment
+# - End-to-end tests for account creation flow
+# - Load testing for concurrent account creations
+# - Failure scenario testing (CRM unavailable, timeout)
+#
+# Deployment Strategy:
+# - Feature flag controlled rollout
+# - Gradual rollout by region (East US → West Europe → Southeast Asia)
+# - Monitor CRM API latency and error rates
+# - Rollback plan if CRM causes account creation delays
+#
+# MIGRATION RISKS:
+# ----------------
+# - Data consistency: Account creation in eCommerce + CRM must be atomic
+# - Performance: CRM API calls may slow down account creation
+# - Dependency: New external dependency on CRM platform availability
+# - Data privacy: GDPR compliance for customer data replication
+# - Schema evolution: CRM schema changes require backend updates
+#
+# ----------------------------------------------------------------------------
+# [Initial] - AS-IS Architecture
+# ----------------------------------------------------------------------------
+# - Legacy eCommerce platform integration (XML/SOAP)
+# - Legacy Loyalty platform integration
+# - Multi-region Azure deployment (East US, West Europe, Southeast Asia)
+# - Cloudflare WAF protection
+# - iOS and Android mobile applications
+#
+# ============================================================================
+
+classes: {
+  hidden: {
+    style.opacity: 0
+  }
+  legacy: {
+    style.opacity: .2
+  }
+}
+# Scenario switcher link
+scenarioNote: {
+  label: "Component Architecture - As-Is . Click here to see the To-Be"
+  link: "https://multani-sandeep.github.io/diagrams/pub-1/toBe.svg"
+  near: top-left
+  shape: rectangle
+  style.fill: "#fff9c4"
+  style.stroke: "#f57f17"
+  style.font-size: 14
+}
+
+user: User {
+  shape: person
+}
+
+fe: Frontend\n(iOS/Android) {
+  shape: rectangle
+  style: {
+    fill: "#e3f2fd"
+  }
+}
+
+cloudflare: Cloudflare\nWAF {
+  shape: hexagon
+  style: {
+    fill: "#ff6b35"
+    stroke: "#d94d1a"
+    stroke-width: 3
+  }
+}
+
+azure: Azure Cloud (Multi-Region) {
+  style: {
+    fill: "#e6f3ff"
+    stroke: "#0078d4"
+    stroke-width: 3
+  }
+
+  regionEastUS: Region: East US {
+    style: {
+      fill: "#cce5ff"
+      stroke: "#0078d4"
+      stroke-width: 2
+      stroke-dash: 5
+    }
+
+    apiGW1: API Gateway\n(Primary) {
+      shape: rectangle
+      style: {
+        fill: "#0078d4"
+      }
+    }
+
+    appSvc1: Azure App Service\n(.NET Backend) {
+      shape: rectangle
+      style: {
+        fill: "#50e6ff"
+      }
+    }
+
+    apiGW1 -> appSvc1: Routes to {
+      style: {
+        stroke: "#0078d4"
+        stroke-width: 2
+      }
+    }
+  }
+
+  regionWestEU: Region: West Europe {
+    style: {
+      fill: "#cce5ff"
+      stroke: "#0078d4"
+      stroke-width: 2
+      stroke-dash: 5
+    }
+
+    apiGW2: API Gateway\n(Secondary) {
+      shape: rectangle
+      style: {
+        fill: "#0078d4"
+      }
+    }
+
+    appSvc2: Azure App Service\n(.NET Backend) {
+      shape: rectangle
+      style: {
+        fill: "#50e6ff"
+      }
+    }
+
+    apiGW2 -> appSvc2: Routes to {
+      style: {
+        stroke: "#0078d4"
+        stroke-width: 2
+      }
+    }
+  }
+
+  regionSoutheastAsia: Region: Southeast Asia {
+    style: {
+      fill: "#cce5ff"
+      stroke: "#0078d4"
+      stroke-width: 2
+      stroke-dash: 5
+    }
+
+    apiGW3: API Gateway\n(Secondary) {
+      shape: rectangle
+      style: {
+        fill: "#0078d4"
+      }
+    }
+
+    appSvc3: Azure App Service\n(.NET Backend) {
+      shape: rectangle
+      style: {
+        fill: "#50e6ff"
+      }
+    }
+
+    apiGW3 -> appSvc3: Routes to {
+      style: {
+        stroke: "#0078d4"
+        stroke-width: 2
+      }
+    }
+  }
+
+  # Cross-region replication
+  regionEastUS.appSvc1 <-> regionWestEU.appSvc2: Replication {
+    style: {
+      stroke: "#9c27b0"
+      stroke-width: 1
+      stroke-dash: 3
+    }
+  }
+
+  regionWestEU.appSvc2 <-> regionSoutheastAsia.appSvc3: Replication {
+    style: {
+      stroke: "#9c27b0"
+      stroke-width: 1
+      stroke-dash: 3
+    }
+  }
+
+  regionEastUS.appSvc1 <-> regionSoutheastAsia.appSvc3: Replication {
+    style: {
+      stroke: "#9c27b0"
+      stroke-width: 1
+      stroke-dash: 3
+    }
+  }
+}
+
+thirdParty: 3rd Party\nSDKs {
+  shape: rectangle
+  style: {
+    fill: "#fff3e0"
+  }
+}
+
+clientSystems: Client Systems\n(eCommerce - Legacy) {
+  shape: cylinder
+  style: {
+    fill: "#e8f5e9"
+  }
+  tooltip: "AS-IS: Legacy eCommerce Platform\nTO-BE: New SaaS eCommerce Platform\n\n⚠️ Schema changes:\n- Product data: Different response format\n- Account data: Different sync protocol"
+}
+
+loyaltyServices: 3rd Party\nLoyalty Services\n(Legacy Provider) {
+  shape: cloud
+  style: {
+    fill: "#fce4ec"
+  }
+  tooltip: "AS-IS: Legacy Loyalty Provider\nTO-BE: New Loyalty Platform\n\n⚠️ Schema changes:\n- Loyalty data: New response attributes"
+}
+
+clientSystemsNew: Client Systems\n(eCommerce - NEW) {
+  shape: cylinder
+  style: {
+    fill: "#e8f5e9"
+    opacity: 0
+  }
+  tooltip: "AS-IS: Legacy eCommerce Platform\nTO-BE: New SaaS eCommerce Platform\n\n⚠️ Schema changes:\n- Product data: Different response format\n- Account data: Different sync protocol"
+}
+
+loyaltyServicesNew: 3rd Party\nLoyalty Services\n(NEW Platform) {
+  shape: cloud
+  style: {
+    fill: "#fce4ec"
+    opacity: 0
+  }
+  tooltip: "AS-IS: Legacy Loyalty Provider\nTO-BE: New Loyalty Platform\n\n⚠️ Schema changes:\n- Loyalty data: New response attributes"
+}
+
+newCRM: New CRM Platform\n(Customer Master) {
+  shape: cylinder
+  style: {
+    fill: "#e1f5fe"
+    opacity: 0
+  }
+  tooltip: "TO-BE Only: New CRM Platform\n\n⚠️ NEW Integration:\n- Replicates account creation\n- Payload: emailAddress, contactPreferences\n- Creates customer master record"
+}
+
+# User interactions
+user -> fe: Uses
+user -> fe: Views products & cart
+user -> fe: Registers account
+user -> fe: Earns loyalty rewards
+user -> fe: Places orders
+
+# Frontend to Cloudflare with data flows
+fe -> cloudflare: Requests {
+  style: {
+    stroke: "#ff6b35"
+    stroke-width: 3
+  }
+}
+
+fe -> cloudflare: "READ: Product data\nREAD: Loyalty data" {
+  style: {
+    stroke: "#4caf50"
+    stroke-width: 2
+    stroke-dash: 3
+  }
+}
+
+fe -> cloudflare: "CREATE: Account data\nCREATE: Loyalty data\nCREATE: Cart data\nCREATE: Order data" {
+  style: {
+    stroke: "#ff9800"
+    stroke-width: 2
+    stroke-dash: 3
+  }
+}
+
+# Cloudflare to Azure regions (load balanced)
+cloudflare -> azure.regionEastUS.apiGW1: "Route: Americas\n(Protected traffic)" {
+  style: {
+    stroke: "#0078d4"
+    stroke-width: 3
+  }
+}
+
+cloudflare -> azure.regionWestEU.apiGW2: "Route: Europe\n(Protected traffic)" {
+  style: {
+    stroke: "#0078d4"
+    stroke-width: 3
+  }
+}
+
+cloudflare -> azure.regionSoutheastAsia.apiGW3: "Route: Asia-Pacific\n(Protected traffic)" {
+  style: {
+    stroke: "#0078d4"
+    stroke-width: 3
+  }
+}
+
+# Frontend 3rd party integrations
+fe -> thirdParty: Integrates with {
+  style: {
+    stroke: "#f57c00"
+    stroke-width: 2
+  }
+}
+
+# Backend to eCommerce client systems - Products, Orders, Account, Cart
+azure.*.appSvc* -> clientSystems: "⚠️ READ: Product data (CHANGED)\n   WRITE: Order data\n⚠️ SYNC: Account data (CHANGED)\n   SYNC: Cart data" {
+  style: {
+    stroke: "#7b1fa2"
+    stroke-width: 3
+    stroke-dash: 3
+  }
+  tooltip: "AS-IS → TO-BE Migration Changes:\n\n1. READ Product data:\n   - Legacy: XML response with nested &lt;product&gt; elements\n   - New: REST JSON with flat product objects\n   - Fields renamed: itemId → sku, description → name\n\n2. SYNC Account data:\n   - Legacy: SOAP request/response\n   - New: REST JSON request/response\n   - Auth changed: Basic → OAuth 2.0\n   - New required fields: loyaltyId, preferences"
+}
+
+# Backend to 3rd party loyalty services - Only Loyalty
+azure.*.appSvc* -> loyaltyServices: "⚠️ SYNC: Loyalty data (NEW ATTRS)" {
+  style: {
+    stroke: "#c2185b"
+    stroke-width: 3
+    stroke-dash: 3
+  }
+  tooltip: "AS-IS → TO-BE Migration Changes:\n\nSYNC Loyalty data - Response Schema:\n\nLegacy attributes:\n- customerId\n- points\n- tier\n- lastUpdated\n\nNew platform adds:\n+ rewardBalance (separate from points)\n+ tierExpiryDate\n+ availableRewards[] array\n+ pointsHistory[] array\n+ preferredRedemption\n+ externalLoyaltyId\n\nRequest schema unchanged"
+}
+
+
+*.*.appSvc* -> loyaltyServicesNew: {
+  style: {
+    stroke: "#c2185b"
+    stroke-width: 3
+    stroke-dash: 3
+    opacity: 0
+  }
+}
+*.*.appSvc* -> clientSystemsNew: {
+  style: {
+    stroke: "#7b1fa2"
+    stroke-width: 3
+    stroke-dash: 3
+    opacity: 0
+  }
+}
+*.*.appSvc* -> newCRM: {
+  style: {
+    stroke: "#00897b"
+    stroke-width: 3
+    stroke-dash: 3
+    opacity: 0
+  }
+}
+
+# Legend
+legend: Architecture Legend {
+  near: bottom-center
+  style: {
+    fill: "#f5f5f5"
+    stroke: "#757575"
+  }
+
+  regions: "Azure Regions (Dashed boxes)" {
+    style: {
+      fill: "#cce5ff"
+    }
+  }
+
+  read: "READ operations (Green)" {
+    style: {
+      fill: "#c8e6c9"
+    }
+  }
+
+  create: "CREATE operations (Orange)" {
+    style: {
+      fill: "#ffe0b2"
+    }
+  }
+
+  ecommSync: "eCommerce SYNC (Purple)\n⚠️ CHANGED: Product & Account schemas" {
+    style: {
+      fill: "#d1c4e9"
+    }
+  }
+
+  loyaltySync: "Loyalty SYNC (Pink)\n⚠️ NEW ATTRS: Response schema enhanced" {
+    style: {
+      fill: "#f8bbd0"
+    }
+  }
+
+  replication: "Cross-region replication" {
+    style: {
+      fill: "#e1bee7"
+    }
+  }
+
+  migration: "Migration Impact:\n⚠️ = Schema/Protocol changes" {
+    style: {
+      fill: "#ffecb3"
+      stroke: "#ff6f00"
+      stroke-width: 2
+    }
+  }
+
+  newIntegration: "New Integration:\n🆕 = TO-BE only (Teal)" {
+    style: {
+      fill: "#b2dfdb"
+      stroke: "#00897b"
+      stroke-width: 2
+    }
+  }
+}
+
+# Migration details annotation
+migrationDetails: {
+  near: top-center
+  label: "Migration Impact Summary"
+  shape: rectangle
+  style: {
+    fill: "#fff3e0"
+    stroke: "#e65100"
+    stroke-width: 2
+  }
+
+  detail1: "1. eCommerce Platform Migration" {
+    shape: text
+  }
+
+  detail1a: "   • Product READ: XML → REST JSON" {
+    shape: text
+    style.font-size: 12
+  }
+
+  detail1b: "   • Account SYNC: SOAP → REST + OAuth 2.0" {
+    shape: text
+    style.font-size: 12
+  }
+
+  detail2: "2. Loyalty Platform Migration" {
+    shape: text
+  }
+
+  detail2a: "   • Response schema: +6 new attributes" {
+    shape: text
+    style.font-size: 12
+  }
+
+  detail2b: "   • Enhanced reward tracking & history" {
+    shape: text
+    style.font-size: 12
+  }
+
+  detail3: "3. New CRM Platform Integration" {
+    shape: text
+  }
+
+  detail3a: "   • CREATE: Account replication to CRM" {
+    shape: text
+    style.font-size: 12
+  }
+
+  detail3b: "   • Payload: emailAddress, contactPreferences" {
+    shape: text
+    style.font-size: 12
+  }
+}
+
+# Scenarios for AS-IS and TO-BE views
+
+scenarios: {
+  asIs: {
+    clientSystems.label: "Client Systems\n(eCommerce - Legacy Platform)"
+    clientSystems.style.fill: "#e8f5e9"
+
+    loyaltyServices.label: "3rd Party\nLoyalty Services\n(Legacy Provider)"
+    loyaltyServices.style.fill: "#fce4ec"
+
+    clientSystemsNew.class: hidden
+	clientSystemsNew.*.class: hidden
+    loyaltyServicesNew.class: hidden
+    loyaltyServicesNew.*.class: hidden
+    newCRM.class: hidden
+    newCRM.*.class: hidden
+
+	(*.*.appSvc* -> clientSystemsNew)[*]: {
+      class: hidden
+    }
+
+	(*.*.appSvc* -> loyaltyServicesNew)[*]: {
+      class: hidden
+    }
+
+	(*.*.appSvc* -> newCRM)[*]: {
+      class: hidden
+    }
+
+    migrationDetails.class: hidden
+	migrationDetails.*.class: hidden
+  }
+
+  toBe: {
+  
+    scenarioNote:{
+	  label: "Component Architecture - To-Be . Click here to go back to As-Is"
+	  link: "https://multani-sandeep.github.io/diagrams/pub-1/asIs.svg"
+	 }
+  
+    clientSystems.class: legacy
+    loyaltyServices.class: legacy
+
+    clientSystemsNew.style.opacity: 1
+    loyaltyServicesNew.style.opacity: 1
+    newCRM.style.opacity: 1
+
+    *.*.appSvc* -> newCRM: "🆕 CREATE: Account data\n(Replicated to CRM)" {
+	  style: {
+	    stroke: "#00897b"
+	    stroke-width: 3
+	    stroke-dash: 3
+	  }
+	  tooltip: "TO-BE New Integration:\n\nCREATE Account replication to CRM:\n\nPayload:\n- emailAddress (required)\n- contactPreferences (object):\n  • marketing: boolean\n  • sms: boolean\n  • email: boolean\n  • push: boolean\n\nProtocol: REST JSON\nAuth: OAuth 2.0\n\nTrigger: On customer account creation\nPurpose: Create customer master record in CRM"
+	}
+
+    *.*.appSvc* -> loyaltyServicesNew: "⚠️ SYNC: Loyalty data (NEW ATTRS)" {
+	  style: {
+	    stroke: "#c2185b"
+	    stroke-width: 3
+	    stroke-dash: 3
+	  }
+	  tooltip: "AS-IS → TO-BE Migration Changes:\n\nSYNC Loyalty data - Response Schema:\n\nLegacy attributes:\n- customerId\n- points\n- tier\n- lastUpdated\n\nNew platform adds:\n+ rewardBalance (separate from points)\n+ tierExpiryDate\n+ availableRewards[] array\n+ pointsHistory[] array\n+ preferredRedemption\n+ externalLoyaltyId\n\nRequest schema unchanged"
+	}
+
+    *.*.appSvc* -> clientSystemsNew: "⚠️ READ: Product data (CHANGED)\n   WRITE: Order data\n⚠️ SYNC: Account data (CHANGED)\n   SYNC: Cart data" {
+	  style: {
+	    stroke: "#7b1fa2"
+	    stroke-width: 3
+	    stroke-dash: 3
+	  }
+	  tooltip: "AS-IS → TO-BE Migration Changes:\n\n1. READ Product data:\n   - Legacy: XML response with nested &lt;product&gt; elements\n   - New: REST JSON with flat product objects\n   - Fields renamed: itemId → sku, description → name\n\n2. SYNC Account data:\n   - Legacy: SOAP request/response\n   - New: REST JSON request/response\n   - Auth changed: Basic → OAuth 2.0\n   - New required fields: loyaltyId, preferences"
+	}
+
+    (*.*.appSvc* -> clientSystems)[*]: {
+      class: hidden
+    }
+    (*.*.appSvc* -> loyaltyServices)[*]: {
+      class: hidden
+    }
+    migrationDetails.style.opacity: 1.0
+  }
+}
