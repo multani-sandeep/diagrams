@@ -1,5 +1,3 @@
-direction: right
-
 # ============================================================================
 # CHANGELOG - Mobile Commerce Architecture
 # ============================================================================
@@ -112,6 +110,8 @@ direction: right
 # - iOS and Android mobile applications
 #
 # ============================================================================
+
+direction: right
 
 classes: {
   hidden: {
@@ -316,15 +316,6 @@ loyaltyServicesNew: 3rd Party\nLoyalty Services\n(NEW Platform) {
   tooltip: "AS-IS: Legacy Loyalty Provider\nTO-BE: New Loyalty Platform\n\n⚠️ Schema changes:\n- Loyalty data: New response attributes"
 }
 
-newCRM: New CRM Platform\n(Customer Master) {
-  shape: cylinder
-  style: {
-    fill: "#e1f5fe"
-    opacity: 0
-  }
-  tooltip: "TO-BE Only: New CRM Platform\n\n⚠️ NEW Integration:\n- Replicates account creation\n- Payload: emailAddress, contactPreferences\n- Creates customer master record"
-}
-
 # User interactions
 user -> fe: Uses
 user -> fe: Views products & cart
@@ -406,7 +397,6 @@ azure.*.appSvc* -> loyaltyServices: "⚠️ SYNC: Loyalty data (NEW ATTRS)" {
   tooltip: "AS-IS → TO-BE Migration Changes:\n\nSYNC Loyalty data - Response Schema:\n\nLegacy attributes:\n- customerId\n- points\n- tier\n- lastUpdated\n\nNew platform adds:\n+ rewardBalance (separate from points)\n+ tierExpiryDate\n+ availableRewards[] array\n+ pointsHistory[] array\n+ preferredRedemption\n+ externalLoyaltyId\n\nRequest schema unchanged"
 }
 
-
 *.*.appSvc* -> loyaltyServicesNew: {
   style: {
     stroke: "#c2185b"
@@ -414,18 +404,11 @@ azure.*.appSvc* -> loyaltyServices: "⚠️ SYNC: Loyalty data (NEW ATTRS)" {
     stroke-dash: 3
     opacity: 0
   }
+  tooltip: https://github.com/multani-sandeep/diagrams/blob/public/pub-1/account-1.yaml
 }
 *.*.appSvc* -> clientSystemsNew: {
   style: {
     stroke: "#7b1fa2"
-    stroke-width: 3
-    stroke-dash: 3
-    opacity: 0
-  }
-}
-*.*.appSvc* -> newCRM: {
-  style: {
-    stroke: "#00897b"
     stroke-width: 3
     stroke-dash: 3
     opacity: 0
@@ -483,14 +466,6 @@ legend: Architecture Legend {
       stroke-width: 2
     }
   }
-
-  newIntegration: "New Integration:\n🆕 = TO-BE only (Teal)" {
-    style: {
-      fill: "#b2dfdb"
-      stroke: "#00897b"
-      stroke-width: 2
-    }
-  }
 }
 
 # Migration details annotation
@@ -531,20 +506,6 @@ migrationDetails: {
     shape: text
     style.font-size: 12
   }
-
-  detail3: "3. New CRM Platform Integration" {
-    shape: text
-  }
-
-  detail3a: "   • CREATE: Account replication to CRM" {
-    shape: text
-    style.font-size: 12
-  }
-
-  detail3b: "   • Payload: emailAddress, contactPreferences" {
-    shape: text
-    style.font-size: 12
-  }
 }
 
 # Scenarios for AS-IS and TO-BE views
@@ -558,68 +519,51 @@ scenarios: {
     loyaltyServices.style.fill: "#fce4ec"
 
     clientSystemsNew.class: hidden
-	clientSystemsNew.*.class: hidden
+    clientSystemsNew.*.class: hidden
     loyaltyServicesNew.class: hidden
     loyaltyServicesNew.*.class: hidden
-    newCRM.class: hidden
-    newCRM.*.class: hidden
 
-	(*.*.appSvc* -> clientSystemsNew)[*]: {
+    (*.*.appSvc* -> clientSystemsNew)[*]: {
       class: hidden
     }
 
-	(*.*.appSvc* -> loyaltyServicesNew)[*]: {
-      class: hidden
-    }
-
-	(*.*.appSvc* -> newCRM)[*]: {
+    (*.*.appSvc* -> loyaltyServicesNew)[*]: {
       class: hidden
     }
 
     migrationDetails.class: hidden
-	migrationDetails.*.class: hidden
+    migrationDetails.*.class: hidden
   }
 
   toBe: {
-  
-    scenarioNote:{
-	  label: "Component Architecture - To-Be . Click here to go back to As-Is"
-	  link: "https://multani-sandeep.github.io/diagrams/pub-1/asIs.svg"
-	 }
-  
+    scenarioNote: {
+      label: "Component Architecture - To-Be . Click here to go back to As-Is"
+      link: "https://multani-sandeep.github.io/diagrams/pub-1/asIs.svg"
+    }
+
     clientSystems.class: legacy
     loyaltyServices.class: legacy
 
     clientSystemsNew.style.opacity: 1
     loyaltyServicesNew.style.opacity: 1
-    newCRM.style.opacity: 1
-
-    *.*.appSvc* -> newCRM: "🆕 CREATE: Account data\n(Replicated to CRM)" {
-	  style: {
-	    stroke: "#00897b"
-	    stroke-width: 3
-	    stroke-dash: 3
-	  }
-	  tooltip: "TO-BE New Integration:\n\nCREATE Account replication to CRM:\n\nPayload:\n- emailAddress (required)\n- contactPreferences (object):\n  • marketing: boolean\n  • sms: boolean\n  • email: boolean\n  • push: boolean\n\nProtocol: REST JSON\nAuth: OAuth 2.0\n\nTrigger: On customer account creation\nPurpose: Create customer master record in CRM"
-	}
 
     *.*.appSvc* -> loyaltyServicesNew: "⚠️ SYNC: Loyalty data (NEW ATTRS)" {
-	  style: {
-	    stroke: "#c2185b"
-	    stroke-width: 3
-	    stroke-dash: 3
-	  }
-	  tooltip: "AS-IS → TO-BE Migration Changes:\n\nSYNC Loyalty data - Response Schema:\n\nLegacy attributes:\n- customerId\n- points\n- tier\n- lastUpdated\n\nNew platform adds:\n+ rewardBalance (separate from points)\n+ tierExpiryDate\n+ availableRewards[] array\n+ pointsHistory[] array\n+ preferredRedemption\n+ externalLoyaltyId\n\nRequest schema unchanged"
-	}
+      style: {
+        stroke: "#c2185b"
+        stroke-width: 3
+        stroke-dash: 3
+      }
+      tooltip: "AS-IS → TO-BE Migration Changes:\n\nSYNC Loyalty data - Response Schema:\n\nLegacy attributes:\n- customerId\n- points\n- tier\n- lastUpdated\n\nNew platform adds:\n+ rewardBalance (separate from points)\n+ tierExpiryDate\n+ availableRewards[] array\n+ pointsHistory[] array\n+ preferredRedemption\n+ externalLoyaltyId\n\nRequest schema unchanged"
+    }
 
     *.*.appSvc* -> clientSystemsNew: "⚠️ READ: Product data (CHANGED)\n   WRITE: Order data\n⚠️ SYNC: Account data (CHANGED)\n   SYNC: Cart data" {
-	  style: {
-	    stroke: "#7b1fa2"
-	    stroke-width: 3
-	    stroke-dash: 3
-	  }
-	  tooltip: "AS-IS → TO-BE Migration Changes:\n\n1. READ Product data:\n   - Legacy: XML response with nested &lt;product&gt; elements\n   - New: REST JSON with flat product objects\n   - Fields renamed: itemId → sku, description → name\n\n2. SYNC Account data:\n   - Legacy: SOAP request/response\n   - New: REST JSON request/response\n   - Auth changed: Basic → OAuth 2.0\n   - New required fields: loyaltyId, preferences"
-	}
+      style: {
+        stroke: "#7b1fa2"
+        stroke-width: 3
+        stroke-dash: 3
+      }
+      tooltip: "AS-IS → TO-BE Migration Changes:\n\n1. READ Product data:\n   - Legacy: XML response with nested &lt;product&gt; elements\n   - New: REST JSON with flat product objects\n   - Fields renamed: itemId → sku, description → name\n\n2. SYNC Account data:\n   - Legacy: SOAP request/response\n   - New: REST JSON request/response\n   - Auth changed: Basic → OAuth 2.0\n   - New required fields: loyaltyId, preferences"
+    }
 
     (*.*.appSvc* -> clientSystems)[*]: {
       class: hidden
