@@ -1,0 +1,362 @@
+# AI-generated OpenAPI3 snippet for customer account endpoint
+openapi: 3.0.3
+info:
+  title: Customer Account Profile API
+  description: |
+    API for retrieving customer account profile information including loyalty details.
+
+    Based on the Mobile Commerce backend (.NET) implementation for account and loyalty profile management.
+  version: 1.0.0
+  contact:
+    name: Platform Team
+    email: platform@company.com
+
+servers:
+  - url: https://api.orgname.com/v1
+    description: Production environment
+  - url: https://api-staging.orgname.com/v1
+    description: Staging environment
+
+paths:
+  /account-loyalty/profile:
+    get:
+      summary: Get customer account loyalty profile
+      description: |
+        Retrieves the authenticated customer's loyalty profile including:
+        - Basic customer information (first name, last name)
+        - Redeemable loyalty points balance
+        - Current loyalty tier information and tier score
+        - Next tier information (if applicable)
+        - Next reward milestone
+        - Level up progress and expiration
+
+        **Authentication**: Requires valid user authorization token
+
+        **Data Source**: Integrates with loyalty platform to fetch real-time customer loyalty data
+      operationId: getAccountLoyaltyProfile
+      tags:
+        - Account Loyalty
+
+      parameters:
+        - name: X-Platform-UserId
+          in: header
+          description: Unique identifier for the user in the platform
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: "E9368766-5A01-45BC-9E96-847AEFF0F181"
+
+        - name: X-Platform-AppIdentifier
+          in: header
+          description: Application identifier to distinguish between different client apps
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: "df2cc704-1b90-45da-ae61-3308f6ebac2d"
+
+        - name: Authorization
+          in: header
+          description: Bearer token for user authentication
+          required: true
+          schema:
+            type: string
+            example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+      responses:
+        '200':
+          description: Successfully retrieved customer loyalty profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountLoyaltyProfileResponse'
+              examples:
+                activeCustomer:
+                  summary: Active customer with tier progression
+                  value:
+                    id: 123456
+                    firstName: "Jane"
+                    lastName: "Smith"
+                    redeemablePoints: 2500
+                    tierInfo:
+                      tierScore: 2500.00
+                      currentLevel:
+                        title: "Silver"
+                        minValue: 1000.00
+                        maxValue: 5000.00
+                        imageUrl: "https://cdn.orgname.com/loyalty/silver-tier.png"
+                      nextLevel:
+                        title: "Gold"
+                        minValue: 5000.00
+                        maxValue: 10000.00
+                        imageUrl: "https://cdn.orgname.com/loyalty/gold-tier.png"
+                    nextReward:
+                      points: 500
+                      amount: 25.00
+                    levelUp:
+                      points: 2500
+                      amount: 100.00
+                      expiresAt: "2024-12-31T23:59:59Z"
+                    tierLevelKey: "SILVER"
+
+                topTierCustomer:
+                  summary: Customer at highest tier (no next level)
+                  value:
+                    id: 789012
+                    firstName: "John"
+                    lastName: "Doe"
+                    redeemablePoints: 15000
+                    tierInfo:
+                      tierScore: 15000.00
+                      currentLevel:
+                        title: "Platinum"
+                        minValue: 10000.00
+                        maxValue: null
+                        imageUrl: "https://cdn.orgname.com/loyalty/platinum-tier.png"
+                      nextLevel: null
+                    nextReward:
+                      points: 200
+                      amount: 10.00
+                    levelUp: null
+                    tierLevelKey: "PLATINUM"
+
+        '400':
+          description: Bad request - Invalid parameters or missing required headers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 400
+                message: "GENERIC_ERROR"
+                errorMessage: "Missing required header: X-Platform-UserId"
+
+        '401':
+          description: Unauthorized - Invalid or expired authorization token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 401
+                message: "UNAUTHORIZED"
+                errorMessage: "Invalid or expired authorization token"
+
+        '404':
+          description: Not found - Customer loyalty profile does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 404
+                message: "NOT_FOUND"
+                errorMessage: "Customer loyalty profile not found for user"
+
+        '424':
+          description: Failed dependency - Unable to retrieve data from loyalty platform
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 424
+                message: "GENERIC_ERROR"
+                errorMessage: "Failed to retrieve loyalty profile from external service"
+
+      security:
+        - BearerAuth: []
+
+components:
+  schemas:
+    AccountLoyaltyProfileResponse:
+      type: object
+      description: Customer account loyalty profile containing tier information and reward details
+      required:
+        - id
+        - firstName
+        - lastName
+        - tierInfo
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: Unique loyalty account identifier
+          example: 123456
+
+        firstName:
+          type: string
+          description: Customer's first name
+          example: "Jane"
+
+        lastName:
+          type: string
+          description: Customer's last name
+          example: "Smith"
+
+        redeemablePoints:
+          type: integer
+          format: int32
+          nullable: true
+          description: Current balance of redeemable loyalty points
+          example: 2500
+
+        tierInfo:
+          $ref: '#/components/schemas/LoyaltyTier'
+
+        nextReward:
+          allOf:
+            - $ref: '#/components/schemas/LoyaltyNextReward'
+          nullable: true
+          description: Information about the next reward milestone
+
+        levelUp:
+          allOf:
+            - $ref: '#/components/schemas/LoyaltyLevelUp'
+          nullable: true
+          description: Information about points and amount needed to level up (if applicable)
+
+        tierLevelKey:
+          type: string
+          nullable: true
+          description: Current tier level key (non-localizable identifier)
+          example: "SILVER"
+          enum:
+            - "BRONZE"
+            - "SILVER"
+            - "GOLD"
+            - "PLATINUM"
+
+    LoyaltyTier:
+      type: object
+      description: Customer's loyalty tier information including current and next levels
+      required:
+        - tierScore
+        - currentLevel
+      properties:
+        tierScore:
+          type: number
+          format: decimal
+          description: Total tier score accumulated by the customer
+          example: 2500.00
+
+        currentLevel:
+          $ref: '#/components/schemas/LoyaltyLevel'
+
+        nextLevel:
+          allOf:
+            - $ref: '#/components/schemas/LoyaltyLevel'
+          nullable: true
+          description: Next tier level (null if customer is at highest tier)
+
+    LoyaltyLevel:
+      type: object
+      description: Loyalty tier level definition
+      required:
+        - title
+        - imageUrl
+      properties:
+        title:
+          type: string
+          description: Display name of the loyalty tier
+          example: "Silver"
+
+        minValue:
+          type: number
+          format: decimal
+          nullable: true
+          description: Minimum tier score required for this level
+          example: 1000.00
+
+        maxValue:
+          type: number
+          format: decimal
+          nullable: true
+          description: Maximum tier score for this level (null for highest tier)
+          example: 5000.00
+
+        imageUrl:
+          type: string
+          format: uri
+          description: URL to the tier badge/icon image
+          example: "https://cdn.orgname.com/loyalty/silver-tier.png"
+
+    LoyaltyNextReward:
+      type: object
+      description: Information about the next reward milestone
+      required:
+        - points
+        - amount
+      properties:
+        points:
+          type: number
+          format: decimal
+          description: Points needed to reach next reward
+          example: 500
+
+        amount:
+          type: number
+          format: decimal
+          description: Reward amount in currency (e.g., CAD)
+          example: 25.00
+
+    LoyaltyLevelUp:
+      type: object
+      description: Information about tier level progression
+      required:
+        - points
+        - amount
+      properties:
+        points:
+          type: number
+          format: decimal
+          description: Additional points needed to reach next tier level
+          example: 2500
+
+        amount:
+          type: number
+          format: decimal
+          description: Additional spending amount needed to reach next tier level
+          example: 100.00
+
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Expiration date/time for tier level eligibility (ISO 8601 format)
+          example: "2024-12-31T23:59:59Z"
+
+    ErrorResponse:
+      type: object
+      description: Standard error response structure
+      required:
+        - statusCode
+        - message
+      properties:
+        statusCode:
+          type: integer
+          description: HTTP status code
+          example: 400
+
+        message:
+          type: string
+          description: Error message key (typically for localization)
+          example: "GENERIC_ERROR"
+
+        errorMessage:
+          type: string
+          description: Detailed error message for debugging
+          example: "Missing required header: X-Platform-UserId"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from user authentication
+
+tags:
+  - name: Account Loyalty
+    description: Customer account loyalty profile and rewards management
+
