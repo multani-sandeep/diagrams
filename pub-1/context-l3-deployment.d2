@@ -1,0 +1,995 @@
+# ============================================================================
+# L3 Deployment View - Mobile Commerce Architecture
+# ============================================================================
+#
+# This diagram shows the deployment architecture with focus on:
+# - Azure regional resources and availability zones
+# - Data residency and compliance requirements
+# - Network topology and security boundaries
+# - Cross-region replication patterns
+#
+# Based on: /Users/sandeep/Documents/multani-sandeep/diagrams/pub-1/context.d2
+# ============================================================================
+
+direction: right
+
+classes: {
+  hidden: {
+    style.opacity: 0
+  }
+  legacy: {
+    style.opacity: .2
+  }
+}
+
+# Scenario switcher link
+scenarioNote: {
+  label: "L3 Deployment View - As-Is . Click here to see the To-Be"
+  link: "https://raw.githubusercontent.com/multani-sandeep/diagrams/refs/heads/public/pub-1/context-l3-deployment/toBe.svg"
+  near: top-left
+  shape: rectangle
+  style.fill: "#fff9c4"
+  style.stroke: "#f57f17"
+  style.font-size: 14
+}
+
+# ====================
+# External Clients
+# ====================
+
+internet: Internet {
+  shape: cloud
+  style: {
+    fill: "#e0e0e0"
+    stroke: "#616161"
+    stroke-width: 2
+  }
+}
+
+users: Global Users {
+  shape: rectangle
+  style: {
+    fill: "#e3f2fd"
+    stroke: "#1976d2"
+    stroke-width: 2
+  }
+
+  usersAmericas: "Americas Users\n(US, Canada, LATAM)" {
+    shape: person
+    style.fill: "#bbdefb"
+  }
+
+  usersEurope: "European Users\n(UK, EU)" {
+    shape: person
+    style.fill: "#bbdefb"
+  }
+
+  usersAPAC: "APAC Users\n(ANZ, SEA)" {
+    shape: person
+    style.fill: "#bbdefb"
+  }
+}
+
+# ====================
+# CDN & WAF Layer
+# ====================
+
+cloudflare: Cloudflare Global Network {
+  shape: rectangle
+  style: {
+    fill: "#fff3e0"
+    stroke: "#ff6b35"
+    stroke-width: 3
+  }
+
+  waf: WAF & DDoS Protection {
+    shape: hexagon
+    style: {
+      fill: "#ff6b35"
+      stroke: "#d94d1a"
+      stroke-width: 2
+    }
+    tooltip: "Cloudflare WAF\n\nFeatures:\n- DDoS protection\n- Bot management\n- Rate limiting\n- SSL/TLS termination\n- Geo-routing"
+  }
+
+  edgeCache: Edge Caching (200+ PoPs) {
+    shape: rectangle
+    style: {
+      fill: "#ffe0b2"
+      stroke: "#f57c00"
+    }
+    tooltip: "Global CDN:\n- Static assets\n- API response caching\n- Image optimization"
+  }
+}
+
+# ====================
+# Azure Region: East US
+# ====================
+
+azureEastUS: Azure Region: East US {
+  style: {
+    fill: "#e6f3ff"
+    stroke: "#0078d4"
+    stroke-width: 4
+  }
+
+  dataResidencyUS: "📍 Data Residency: United States" {
+    shape: text
+    # near: top-center
+    style: {
+      font-size: 13
+      bold: true
+      fill: "#bbdefb"
+    }
+  }
+
+  complianceUS: "Compliance: SOC 2, CCPA, PCI-DSS" {
+    shape: text
+    # near: top-center
+    style.font-size: 11
+  }
+
+  az1US: Availability Zone 1 {
+    style: {
+      fill: "#cce5ff"
+      stroke: "#0078d4"
+      stroke-width: 2
+      stroke-dash: 5
+    }
+
+    apiGW1a: API Gateway\n(Primary - AZ1) {
+      shape: rectangle
+      style: {
+        fill: "#0078d4"
+        stroke: "#005a9e"
+        stroke-width: 2
+      }
+      tooltip: "Azure API Management\n\nAZ: East US - Zone 1\nSKU: Premium (99.99% SLA)\n\nFeatures:\n- API throttling\n- Request/response transformation\n- OAuth 2.0 validation\n- Request logging"
+    }
+
+    appSvc1a: App Service\n(.NET 8 Backend - AZ1) {
+      shape: rectangle
+      style: {
+        fill: "#50e6ff"
+        stroke: "#0078d4"
+        stroke-width: 2
+      }
+      tooltip: "Azure App Service\n\nAZ: East US - Zone 1\nSKU: P3V3 (Zone redundant)\nRuntime: .NET 8\nInstances: Auto-scale 2-10\n\nData Access:\n- Redis Cache (local AZ)\n- Azure SQL (zone-redundant)\n- Blob Storage (LRS)"
+    }
+
+    apiGW1a -> appSvc1a: Routes to {
+      style: {
+        stroke: "#0078d4"
+        stroke-width: 2
+      }
+    }
+  }
+
+  az2US: Availability Zone 2 {
+    style: {
+      fill: "#cce5ff"
+      stroke: "#0078d4"
+      stroke-width: 2
+      stroke-dash: 5
+    }
+
+    apiGW1b: API Gateway\n(Standby - AZ2) {
+      shape: rectangle
+      style: {
+        fill: "#0078d4"
+        stroke: "#005a9e"
+        stroke-width: 2
+      }
+      tooltip: "Azure API Management\n\nAZ: East US - Zone 2\nSKU: Premium (Zone redundant)\n\nRole: Active-Active with AZ1"
+    }
+
+    appSvc1b: App Service\n(.NET 8 Backend - AZ2) {
+      shape: rectangle
+      style: {
+        fill: "#50e6ff"
+        stroke: "#0078d4"
+        stroke-width: 2
+      }
+      tooltip: "Azure App Service\n\nAZ: East US - Zone 2\nSKU: P3V3 (Zone redundant)\nRuntime: .NET 8\nInstances: Auto-scale 2-10"
+    }
+
+    apiGW1b -> appSvc1b: Routes to {
+      style: {
+        stroke: "#0078d4"
+        stroke-width: 2
+      }
+    }
+  }
+
+  dataServicesUS: Data Services (Zone-Redundant) {
+    style: {
+      fill: "#b3d9ff"
+      stroke: "#0078d4"
+      stroke-width: 2
+      stroke-dash: 3
+    }
+
+    sqlUS: Azure SQL Database\n(Zone-redundant) {
+      shape: cylinder
+      style: {
+        fill: "#4fc3f7"
+        stroke: "#0277bd"
+      }
+      tooltip: "Azure SQL Database\n\nTier: Business Critical (Zone-redundant)\nReplicas: 3 (across AZ1, AZ2, AZ3)\n\nData Classification:\n- PII: Customer accounts\n- Transactional: Orders, cart\n\nResidency: US East only\nBackup: GRS (paired to West US 2)"
+    }
+
+    redisUS: Azure Redis Cache\n(Premium) {
+      shape: rectangle
+      style: {
+        fill: "#ef5350"
+        stroke: "#c62828"
+      }
+      tooltip: "Azure Redis Cache\n\nTier: Premium (Zone-redundant)\nReplicas: 2 (AZ1, AZ2)\n\nUse Cases:\n- Session state\n- API response cache (60s TTL)\n- Rate limiting counters\n\nResidency: US East only"
+    }
+
+    blobUS: Azure Blob Storage\n(LRS) {
+      shape: cylinder
+      style: {
+        fill: "#9ccc65"
+        stroke: "#558b2f"
+      }
+      tooltip: "Azure Blob Storage\n\nRedundancy: LRS (Locally redundant)\n\nData:\n- Product images\n- User uploads\n- Architecture diagrams\n\nResidency: US East only\nNo cross-border replication"
+    }
+  }
+
+  az1US.appSvc1a -> dataServicesUS.sqlUS: Reads/Writes {
+    style: {
+      stroke: "#0277bd"
+      stroke-width: 2
+    }
+  }
+
+  az1US.appSvc1a -> dataServicesUS.redisUS: Cache ops {
+    style: {
+      stroke: "#c62828"
+      stroke-width: 1
+      stroke-dash: 3
+    }
+  }
+
+  az2US.appSvc1b -> dataServicesUS.sqlUS: Reads/Writes {
+    style: {
+      stroke: "#0277bd"
+      stroke-width: 2
+    }
+  }
+
+  az2US.appSvc1b -> dataServicesUS.redisUS: Cache ops {
+    style: {
+      stroke: "#c62828"
+      stroke-width: 1
+      stroke-dash: 3
+    }
+  }
+}
+
+# ====================
+# Azure Region: West Europe
+# ====================
+
+azureWestEU: Azure Region: West Europe {
+  style: {
+    fill: "#e6f3ff"
+    stroke: "#0078d4"
+    stroke-width: 4
+  }
+
+  dataResidencyEU: "📍 Data Residency: European Union" {
+    shape: text
+    # near: top-center
+    style: {
+      font-size: 13
+      bold: true
+      fill: "#bbdefb"
+    }
+  }
+
+  complianceEU: "Compliance: GDPR, ISO 27001, PCI-DSS" {
+    shape: text
+    # near: top-center
+    style.font-size: 11
+  }
+
+  gdprNote: "⚠️ GDPR: Customer PII remains in EU region" {
+    shape: text
+    # near: top-center
+    style: {
+      font-size: 10
+      fill: "#fff9c4"
+    }
+  }
+
+  az1EU: Availability Zone 1 {
+    style: {
+      fill: "#cce5ff"
+      stroke: "#0078d4"
+      stroke-width: 2
+      stroke-dash: 5
+    }
+
+    apiGW2a: API Gateway\n(Primary - AZ1) {
+      shape: rectangle
+      style: {
+        fill: "#0078d4"
+        stroke: "#005a9e"
+        stroke-width: 2
+      }
+      tooltip: "Azure API Management\n\nAZ: West Europe - Zone 1\nSKU: Premium (Zone redundant)"
+    }
+
+    appSvc2a: App Service\n(.NET 8 Backend - AZ1) {
+      shape: rectangle
+      style: {
+        fill: "#50e6ff"
+        stroke: "#0078d4"
+        stroke-width: 2
+      }
+      tooltip: "Azure App Service\n\nAZ: West Europe - Zone 1\nSKU: P3V3 (Zone redundant)\nRuntime: .NET 8\nInstances: Auto-scale 2-10\n\nGDPR Compliance:\n- PII data processing in EU only\n- Data subject access requests\n- Right to be forgotten implementation"
+    }
+
+    apiGW2a -> appSvc2a: Routes to {
+      style: {
+        stroke: "#0078d4"
+        stroke-width: 2
+      }
+    }
+  }
+
+  az2EU: Availability Zone 2 {
+    style: {
+      fill: "#cce5ff"
+      stroke: "#0078d4"
+      stroke-width: 2
+      stroke-dash: 5
+    }
+
+    apiGW2b: API Gateway\n(Standby - AZ2) {
+      shape: rectangle
+      style: {
+        fill: "#0078d4"
+        stroke: "#005a9e"
+        stroke-width: 2
+      }
+    }
+
+    appSvc2b: App Service\n(.NET 8 Backend - AZ2) {
+      shape: rectangle
+      style: {
+        fill: "#50e6ff"
+        stroke: "#0078d4"
+        stroke-width: 2
+      }
+    }
+
+    apiGW2b -> appSvc2b: Routes to {
+      style: {
+        stroke: "#0078d4"
+        stroke-width: 2
+      }
+    }
+  }
+
+  dataServicesEU: Data Services (Zone-Redundant) {
+    style: {
+      fill: "#b3d9ff"
+      stroke: "#0078d4"
+      stroke-width: 2
+      stroke-dash: 3
+    }
+
+    sqlEU: Azure SQL Database\n(Zone-redundant) {
+      shape: cylinder
+      style: {
+        fill: "#4fc3f7"
+        stroke: "#0277bd"
+      }
+      tooltip: "Azure SQL Database\n\nTier: Business Critical (Zone-redundant)\nReplicas: 3 (across AZ1, AZ2, AZ3)\n\nGDPR Data:\n- Customer PII (EU residents)\n- GDPR audit logs\n\nResidency: West Europe only\nBackup: GRS (paired to North Europe)\n\n⚠️ NO cross-border replication to US/APAC"
+    }
+
+    redisEU: Azure Redis Cache\n(Premium) {
+      shape: rectangle
+      style: {
+        fill: "#ef5350"
+        stroke: "#c62828"
+      }
+      tooltip: "Azure Redis Cache\n\nTier: Premium (Zone-redundant)\nReplicas: 2 (AZ1, AZ2)\n\nResidency: West Europe only"
+    }
+
+    blobEU: Azure Blob Storage\n(LRS) {
+      shape: cylinder
+      style: {
+        fill: "#9ccc65"
+        stroke: "#558b2f"
+      }
+      tooltip: "Azure Blob Storage\n\nRedundancy: LRS\nResidency: West Europe only\n\n⚠️ GDPR: No replication outside EU"
+    }
+  }
+
+  az1EU.appSvc2a -> dataServicesEU.sqlEU: Reads/Writes {
+    style: {
+      stroke: "#0277bd"
+      stroke-width: 2
+    }
+  }
+
+  az1EU.appSvc2a -> dataServicesEU.redisEU: Cache ops {
+    style: {
+      stroke: "#c62828"
+      stroke-width: 1
+      stroke-dash: 3
+    }
+  }
+
+  az2EU.appSvc2b -> dataServicesEU.sqlEU: Reads/Writes {
+    style: {
+      stroke: "#0277bd"
+      stroke-width: 2
+    }
+  }
+
+  az2EU.appSvc2b -> dataServicesEU.redisEU: Cache ops {
+    style: {
+      stroke: "#c62828"
+      stroke-width: 1
+      stroke-dash: 3
+    }
+  }
+}
+
+# ====================
+# Azure Region: Southeast Asia
+# ====================
+
+azureSEAsia: Azure Region: Southeast Asia {
+  style: {
+    fill: "#e6f3ff"
+    stroke: "#0078d4"
+    stroke-width: 4
+  }
+
+  dataResidencySEA: "📍 Data Residency: Asia-Pacific" {
+    shape: text
+    # near: top-center
+    style: {
+      font-size: 13
+      bold: true
+      fill: "#bbdefb"
+    }
+  }
+
+  complianceSEA: "Compliance: PDPA (Singapore), Privacy Act (Australia)" {
+    shape: text
+    # near: top-center
+    style.font-size: 11
+  }
+
+  az1SEA: Availability Zone 1 {
+    style: {
+      fill: "#cce5ff"
+      stroke: "#0078d4"
+      stroke-width: 2
+      stroke-dash: 5
+    }
+
+    apiGW3a: API Gateway\n(Primary - AZ1) {
+      shape: rectangle
+      style: {
+        fill: "#0078d4"
+        stroke: "#005a9e"
+        stroke-width: 2
+      }
+      tooltip: "Azure API Management\n\nAZ: Southeast Asia - Zone 1\nSKU: Premium (Zone redundant)"
+    }
+
+    appSvc3a: App Service\n(.NET 8 Backend - AZ1) {
+      shape: rectangle
+      style: {
+        fill: "#50e6ff"
+        stroke: "#0078d4"
+        stroke-width: 2
+      }
+      tooltip: "Azure App Service\n\nAZ: Southeast Asia - Zone 1\nSKU: P3V3 (Zone redundant)\nRuntime: .NET 8\nInstances: Auto-scale 2-10\n\nCompliance:\n- PDPA (Singapore)\n- Privacy Act (Australia)\n- Data localization requirements"
+    }
+
+    apiGW3a -> appSvc3a: Routes to {
+      style: {
+        stroke: "#0078d4"
+        stroke-width: 2
+      }
+    }
+  }
+
+  az2SEA: Availability Zone 2 {
+    style: {
+      fill: "#cce5ff"
+      stroke: "#0078d4"
+      stroke-width: 2
+      stroke-dash: 5
+    }
+
+    apiGW3b: API Gateway\n(Standby - AZ2) {
+      shape: rectangle
+      style: {
+        fill: "#0078d4"
+        stroke: "#005a9e"
+        stroke-width: 2
+      }
+    }
+
+    appSvc3b: App Service\n(.NET 8 Backend - AZ2) {
+      shape: rectangle
+      style: {
+        fill: "#50e6ff"
+        stroke: "#0078d4"
+        stroke-width: 2
+      }
+    }
+
+    apiGW3b -> appSvc3b: Routes to {
+      style: {
+        stroke: "#0078d4"
+        stroke-width: 2
+      }
+    }
+  }
+
+  dataServicesSEA: Data Services (Zone-Redundant) {
+    style: {
+      fill: "#b3d9ff"
+      stroke: "#0078d4"
+      stroke-width: 2
+      stroke-dash: 3
+    }
+
+    sqlSEA: Azure SQL Database\n(Zone-redundant) {
+      shape: cylinder
+      style: {
+        fill: "#4fc3f7"
+        stroke: "#0277bd"
+      }
+      tooltip: "Azure SQL Database\n\nTier: Business Critical (Zone-redundant)\nReplicas: 3 (across AZ1, AZ2, AZ3)\n\nData Classification:\n- Customer PII (APAC residents)\n- Transactional data\n\nResidency: Southeast Asia only\nBackup: GRS (paired to East Asia)\n\n⚠️ Data localization per country requirements"
+    }
+
+    redisSEA: Azure Redis Cache\n(Premium) {
+      shape: rectangle
+      style: {
+        fill: "#ef5350"
+        stroke: "#c62828"
+      }
+      tooltip: "Azure Redis Cache\n\nTier: Premium (Zone-redundant)\nReplicas: 2 (AZ1, AZ2)\n\nResidency: Southeast Asia only"
+    }
+
+    blobSEA: Azure Blob Storage\n(LRS) {
+      shape: cylinder
+      style: {
+        fill: "#9ccc65"
+        stroke: "#558b2f"
+      }
+      tooltip: "Azure Blob Storage\n\nRedundancy: LRS\nResidency: Southeast Asia only"
+    }
+  }
+
+  az1SEA.appSvc3a -> dataServicesSEA.sqlSEA: Reads/Writes {
+    style: {
+      stroke: "#0277bd"
+      stroke-width: 2
+    }
+  }
+
+  az1SEA.appSvc3a -> dataServicesSEA.redisSEA: Cache ops {
+    style: {
+      stroke: "#c62828"
+      stroke-width: 1
+      stroke-dash: 3
+    }
+  }
+
+  az2SEA.appSvc3b -> dataServicesSEA.sqlSEA: Reads/Writes {
+    style: {
+      stroke: "#0277bd"
+      stroke-width: 2
+    }
+  }
+
+  az2SEA.appSvc3b -> dataServicesSEA.redisSEA: Cache ops {
+    style: {
+      stroke: "#c62828"
+      stroke-width: 1
+      stroke-dash: 3
+    }
+  }
+}
+
+# ====================
+# External Systems
+# ====================
+
+externalSystems: External Systems {
+  style: {
+    fill: "#f5f5f5"
+    stroke: "#9e9e9e"
+    stroke-width: 2
+  }
+
+  eCommerce: eCommerce Platform\n(3rd Party SaaS) {
+    shape: cylinder
+    style: {
+      fill: "#e8f5e9"
+      stroke: "#388e3c"
+    }
+    tooltip: "External System\n\nLocation: US-based SaaS\nConnectivity: Public internet (HTTPS)\nData: Product catalog, orders\n\nLatency:\n- US East: ~50ms\n- West EU: ~120ms\n- SE Asia: ~200ms"
+  }
+
+  loyalty: Loyalty Platform\n(3rd Party SaaS) {
+    shape: cloud
+    style: {
+      fill: "#fce4ec"
+      stroke: "#c2185b"
+    }
+    tooltip: "External System\n\nLocation: Multi-region SaaS\nConnectivity: Public internet (HTTPS)\nData: Customer loyalty points\n\nRegional endpoints:\n- US: us.loyalty.com\n- EU: eu.loyalty.com\n- APAC: apac.loyalty.com"
+  }
+
+  crm: CRM Platform\n(New - 3rd Party SaaS) {
+    shape: cylinder
+    style: {
+      fill: "#e1f5fe"
+      stroke: "#00897b"
+      opacity: 0
+    }
+    tooltip: "External System (TO-BE)\n\nLocation: US-based SaaS\nConnectivity: Public internet (HTTPS)\nData: Customer master data\n\nData Sync:\n- Direction: One-way (Azure → CRM)\n- Frequency: Real-time (event-driven)\n- PII Handling: Encrypted in transit"
+  }
+}
+
+# ====================
+# Network Flows
+# ====================
+
+# Users to Cloudflare
+users.usersAmericas -> cloudflare.waf: HTTPS {
+  style: {
+    stroke: "#ff6b35"
+    stroke-width: 2
+  }
+}
+
+users.usersEurope -> cloudflare.waf: HTTPS {
+  style: {
+    stroke: "#ff6b35"
+    stroke-width: 2
+  }
+}
+
+users.usersAPAC -> cloudflare.waf: HTTPS {
+  style: {
+    stroke: "#ff6b35"
+    stroke-width: 2
+  }
+}
+
+# Cloudflare to Azure regions (geo-routed)
+cloudflare.waf -> azureEastUS.az1US.apiGW1a: "Americas Traffic\n(Geo-routed)" {
+  style: {
+    stroke: "#0078d4"
+    stroke-width: 3
+  }
+  tooltip: "Traffic Route: Americas\n\nLatency: ~20-50ms\nBandwidth: Up to 10 Gbps\nProtocol: HTTPS (TLS 1.3)"
+}
+
+cloudflare.waf -> azureWestEU.az1EU.apiGW2a: "Europe Traffic\n(Geo-routed)" {
+  style: {
+    stroke: "#0078d4"
+    stroke-width: 3
+  }
+  tooltip: "Traffic Route: Europe\n\nLatency: ~10-30ms\nBandwidth: Up to 10 Gbps\nProtocol: HTTPS (TLS 1.3)\n\nGDPR: EU traffic stays in EU region"
+}
+
+cloudflare.waf -> azureSEAsia.az1SEA.apiGW3a: "APAC Traffic\n(Geo-routed)" {
+  style: {
+    stroke: "#0078d4"
+    stroke-width: 3
+  }
+  tooltip: "Traffic Route: APAC\n\nLatency: ~15-40ms\nBandwidth: Up to 10 Gbps\nProtocol: HTTPS (TLS 1.3)"
+}
+
+# Cross-region replication (metadata only, not PII)
+azureEastUS.dataServicesUS.redisUS <-> azureWestEU.dataServicesEU.redisEU: "Metadata Replication\n(Non-PII only)" {
+  style: {
+    stroke: "#9c27b0"
+    stroke-width: 1
+    stroke-dash: 3
+  }
+  tooltip: "Cross-Region Replication\n\nData: Non-PII metadata only\n- Product catalog cache\n- Configuration settings\n- Feature flags\n\n⚠️ EXCLUDED:\n- Customer PII (GDPR)\n- Transactional data\n- Session state\n\nLatency: ~80ms\nProtocol: Private Link"
+}
+
+azureWestEU.dataServicesEU.redisEU <-> azureSEAsia.dataServicesSEA.redisSEA: "Metadata Replication\n(Non-PII only)" {
+  style: {
+    stroke: "#9c27b0"
+    stroke-width: 1
+    stroke-dash: 3
+  }
+  tooltip: "Cross-Region Replication\n\nData: Non-PII metadata only\nLatency: ~180ms\nProtocol: Private Link"
+}
+
+azureEastUS.dataServicesUS.redisUS <-> azureSEAsia.dataServicesSEA.redisSEA: "Metadata Replication\n(Non-PII only)" {
+  style: {
+    stroke: "#9c27b0"
+    stroke-width: 1
+    stroke-dash: 3
+  }
+  tooltip: "Cross-Region Replication\n\nData: Non-PII metadata only\nLatency: ~220ms\nProtocol: Private Link"
+}
+
+# Backend to external systems (all regions)
+azureEastUS.az1US.appSvc1a -> externalSystems.eCommerce: API Calls {
+  style: {
+    stroke: "#388e3c"
+    stroke-width: 2
+  }
+}
+
+azureEastUS.az1US.appSvc1a -> externalSystems.loyalty: API Calls {
+  style: {
+    stroke: "#c2185b"
+    stroke-width: 2
+  }
+}
+
+azureWestEU.az1EU.appSvc2a -> externalSystems.eCommerce: API Calls {
+  style: {
+    stroke: "#388e3c"
+    stroke-width: 2
+  }
+}
+
+azureWestEU.az1EU.appSvc2a -> externalSystems.loyalty: API Calls {
+  style: {
+    stroke: "#c2185b"
+    stroke-width: 2
+  }
+}
+
+azureSEAsia.az1SEA.appSvc3a -> externalSystems.eCommerce: API Calls {
+  style: {
+    stroke: "#388e3c"
+    stroke-width: 2
+  }
+}
+
+azureSEAsia.az1SEA.appSvc3a -> externalSystems.loyalty: API Calls {
+  style: {
+    stroke: "#c2185b"
+    stroke-width: 2
+  }
+}
+
+# Backend to CRM (hidden by default)
+azureEastUS.az1US.appSvc1a -> externalSystems.crm: {
+  style: {
+    stroke: "#00897b"
+    stroke-width: 2
+    opacity: 0
+  }
+}
+
+azureWestEU.az1EU.appSvc2a -> externalSystems.crm: {
+  style: {
+    stroke: "#00897b"
+    stroke-width: 2
+    opacity: 0
+  }
+}
+
+azureSEAsia.az1SEA.appSvc3a -> externalSystems.crm: {
+  style: {
+    stroke: "#00897b"
+    stroke-width: 2
+    opacity: 0
+  }
+}
+
+# ====================
+# Legend
+# ====================
+
+legend: L3 Deployment Legend {
+  near: bottom-center
+  style: {
+    fill: "#f5f5f5"
+    stroke: "#757575"
+    stroke-width: 2
+  }
+
+  title: "Infrastructure & Compliance" {
+    style: {
+      font-size: 14
+      bold: true
+    }
+  }
+
+  azRegion: "  Azure Region (Solid border)" {
+    style: {
+      fill: "#e6f3ff"
+      stroke: "#0078d4"
+    }
+  }
+
+  availabilityZone: "  Availability Zone (Dashed border)" {
+    style: {
+      fill: "#cce5ff"
+      stroke: "#0078d4"
+      stroke-dash: 5
+    }
+  }
+
+  dataResidency: "  📍 = Data Residency Boundary" {
+    style: {
+      fill: "#fff9c4"
+      stroke: "#f57f17"
+    }
+  }
+
+  replication: "  Purple dashed = Metadata replication (Non-PII)" {
+    style: {
+      fill: "#e1bee7"
+    }
+  }
+
+  compliance: "Data Residency Rules:" {
+    style: {
+      font-size: 12
+      bold: true
+    }
+  }
+
+  complianceUS: "  • US: CCPA, SOC 2, PCI-DSS" {
+    style.font-size: 10
+  }
+
+  complianceEU: "  • EU: GDPR (No cross-border PII)" {
+    style.font-size: 10
+  }
+
+  complianceSEA: "  • APAC: PDPA, Privacy Act" {
+    style.font-size: 10
+  }
+}
+
+# ====================
+# Architecture Notes
+# ====================
+
+architectureNotes: {
+  near: top-right
+  label: "L3 Deployment Architecture"
+  shape: rectangle
+  style: {
+    fill: "#e8f5e9"
+    stroke: "#388e3c"
+    stroke-width: 2
+  }
+
+  note1: "High Availability:" {
+    shape: text
+    style: {
+      font-size: 12
+      bold: true
+    }
+  }
+
+  note1a: "  • Zone-redundant services (99.99% SLA)" {
+    shape: text
+    style.font-size: 10
+  }
+
+  note1b: "  • Auto-scaling: 2-10 instances per AZ" {
+    shape: text
+    style.font-size: 10
+  }
+
+  note1c: "  • Geo-distributed failover" {
+    shape: text
+    style.font-size: 10
+  }
+
+  note2: "Data Residency:" {
+    shape: text
+    style: {
+      font-size: 12
+      bold: true
+    }
+  }
+
+  note2a: "  • Customer PII stays in origin region" {
+    shape: text
+    style.font-size: 10
+  }
+
+  note2b: "  • Only metadata crosses borders" {
+    shape: text
+    style.font-size: 10
+  }
+
+  note2c: "  • GDPR-compliant EU data isolation" {
+    shape: text
+    style.font-size: 10
+  }
+
+  note3: "Network Performance:" {
+    shape: text
+    style: {
+      font-size: 12
+      bold: true
+    }
+  }
+
+  note3a: "  • Cloudflare: 200+ PoPs globally" {
+    shape: text
+    style.font-size: 10
+  }
+
+  note3b: "  • Cross-region latency: 80-220ms" {
+    shape: text
+    style.font-size: 10
+  }
+
+  note3c: "  • TLS 1.3 for all traffic" {
+    shape: text
+    style.font-size: 10
+  }
+}
+
+# ====================
+# Scenarios: AS-IS vs TO-BE
+# ====================
+
+scenarios: {
+  asIs: {
+    scenarioNote.label: "L3 Deployment View - As-Is"
+
+    # Hide CRM integration
+    externalSystems.crm.class: hidden
+
+    (azureEastUS.az1US.appSvc1a -> externalSystems.crm)[*].class: hidden
+    (azureWestEU.az1EU.appSvc2a -> externalSystems.crm)[*].class: hidden
+    (azureSEAsia.az1SEA.appSvc3a -> externalSystems.crm)[*].class: hidden
+  }
+
+  toBe: {
+    scenarioNote: {
+      label: "L3 Deployment View - To-Be"
+      link: "https://raw.githubusercontent.com/multani-sandeep/diagrams/refs/heads/public/pub-1/context-l3-deployment/asIs.svg"
+    }
+
+    # Show CRM integration
+    externalSystems.crm.style.opacity: 1
+
+    azureEastUS.az1US.appSvc1a -> externalSystems.crm: "🆕 CRM Sync\n(Account creation)" {
+      style: {
+        stroke: "#00897b"
+        stroke-width: 2
+      }
+      tooltip: "Backend → CRM Integration\n\nTrigger: Account creation event\nProtocol: HTTPS + OAuth 2.0\nData: emailAddress, contactPreferences\n\nData Residency:\n- US accounts: Synced from US East\n- EU accounts: Synced from West EU (GDPR)\n- APAC accounts: Synced from SE Asia"
+    }
+
+    azureWestEU.az1EU.appSvc2a -> externalSystems.crm: "🆕 CRM Sync\n(Account creation)" {
+      style: {
+        stroke: "#00897b"
+        stroke-width: 2
+      }
+      tooltip: "GDPR Compliant CRM Sync\n\nEU customer data sent from EU region only\nNo cross-border PII transfer"
+    }
+
+    azureSEAsia.az1SEA.appSvc3a -> externalSystems.crm: "🆕 CRM Sync\n(Account creation)" {
+      style: {
+        stroke: "#00897b"
+        stroke-width: 2
+      }
+      tooltip: "APAC CRM Sync\n\nCompliance: PDPA, Privacy Act\nData localization requirements met"
+    }
+  }
+}

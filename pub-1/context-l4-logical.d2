@@ -1,0 +1,438 @@
+# ============================================================================
+# L4 Logical Component View - Mobile Commerce Architecture
+# ============================================================================
+#
+# This diagram shows the logical component interactions without deployment details
+# (no infrastructure, regions, gateways - focus on component relationships)
+#
+# Based on: /Users/sandeep/Documents/multani-sandeep/diagrams/pub-1/context.d2
+# ============================================================================
+
+direction: right
+
+classes: {
+  hidden: {
+    style.opacity: 0
+  }
+  legacy: {
+    style.opacity: .2
+  }
+}
+
+# Scenario switcher link
+scenarioNote: {
+  label: "L4 Logical Component View - As-Is . Click here to see the To-Be"
+  link: "https://raw.githubusercontent.com/multani-sandeep/diagrams/refs/heads/public/pub-1/context-l4-logical-toBe.svg"
+  near: top-left
+  shape: rectangle
+  style.fill: "#fff9c4"
+  style.stroke: "#f57f17"
+  style.font-size: 14
+}
+
+# ====================
+# Logical Components
+# ====================
+
+user: User {
+  shape: person
+  style.fill: "#e3f2fd"
+}
+
+mobileApp: Mobile App\n(iOS/Android) {
+  shape: rectangle
+  style: {
+    fill: "#e3f2fd"
+    stroke: "#1976d2"
+    stroke-width: 2
+  }
+  tooltip: "Logical Component: Mobile Application\n\nResponsibilities:\n- UI/UX for product browsing\n- User authentication\n- Shopping cart management\n- Order placement\n- Loyalty program display"
+}
+
+backend: Backend Service\n(.NET Core) {
+  shape: rectangle
+  style: {
+    fill: "#50e6ff"
+    stroke: "#0078d4"
+    stroke-width: 3
+  }
+  tooltip: "Logical Component: Backend Service\n\nResponsibilities:\n- API orchestration\n- Business logic execution\n- Integration with external systems\n- Data transformation & mapping\n- Authentication & authorization"
+}
+
+thirdPartySDK: 3rd Party SDKs\n(Analytics, Push, etc.) {
+  shape: rectangle
+  style: {
+    fill: "#fff3e0"
+    stroke: "#f57c00"
+    stroke-width: 2
+  }
+  tooltip: "Logical Component: 3rd Party SDKs\n\nExamples:\n- Analytics (Google Analytics, Mixpanel)\n- Push notifications (Firebase)\n- Crash reporting\n- A/B testing"
+}
+
+eCommerceLegacy: eCommerce Platform\n(Legacy) {
+  shape: cylinder
+  style: {
+    fill: "#e8f5e9"
+    stroke: "#388e3c"
+    stroke-width: 2
+  }
+  tooltip: "External System: Legacy eCommerce Platform\n\nIntegration Protocol:\n- Product READ: XML/SOAP\n- Order WRITE: SOAP\n- Account SYNC: SOAP + Basic Auth\n- Cart SYNC: SOAP"
+}
+
+eCommerceNew: eCommerce Platform\n(New SaaS) {
+  shape: cylinder
+  style: {
+    fill: "#e8f5e9"
+    stroke: "#388e3c"
+    stroke-width: 2
+    opacity: 0
+  }
+  tooltip: "External System: New SaaS eCommerce Platform\n\nIntegration Protocol:\n- Product READ: REST JSON\n- Order WRITE: REST JSON\n- Account SYNC: REST JSON + OAuth 2.0\n- Cart SYNC: REST JSON\n\nMigration Changes:\n- Fields renamed: itemId → sku, description → name\n- Auth: Basic → OAuth 2.0\n- New fields: loyaltyId, preferences"
+}
+
+loyaltyLegacy: Loyalty Platform\n(Legacy Provider) {
+  shape: cloud
+  style: {
+    fill: "#fce4ec"
+    stroke: "#c2185b"
+    stroke-width: 2
+  }
+  tooltip: "External System: Legacy Loyalty Provider\n\nResponse Attributes:\n- customerId\n- points\n- tier\n- lastUpdated"
+}
+
+loyaltyNew: Loyalty Platform\n(New Provider) {
+  shape: cloud
+  style: {
+    fill: "#fce4ec"
+    stroke: "#c2185b"
+    stroke-width: 2
+    opacity: 0
+  }
+  tooltip: "External System: New Loyalty Provider\n\nResponse Attributes (Enhanced):\n\nLegacy attributes:\n- customerId\n- points\n- tier\n- lastUpdated\n\nNEW attributes:\n+ rewardBalance (separate from points)\n+ tierExpiryDate\n+ availableRewards[] array\n+ pointsHistory[] array\n+ preferredRedemption\n+ externalLoyaltyId"
+}
+
+crmNew: CRM Platform\n(New System) {
+  shape: cylinder
+  style: {
+    fill: "#e1f5fe"
+    stroke: "#00897b"
+    stroke-width: 2
+    opacity: 0
+  }
+  tooltip: "External System: New CRM Platform\n\nIntegration:\n- Trigger: Account creation event\n- Protocol: REST JSON + OAuth 2.0\n\nPayload:\n- emailAddress (required)\n- contactPreferences {\n    marketing, sms, email, push\n  }\n\nPurpose:\n- Customer master data\n- Marketing automation\n- GDPR compliance"
+}
+
+# ====================
+# User Interactions
+# ====================
+
+user -> mobileApp: Uses {
+  style: {
+    stroke: "#1976d2"
+    stroke-width: 2
+  }
+}
+
+user -> mobileApp: "Views products & cart\nRegisters account\nEarns loyalty rewards\nPlaces orders" {
+  style: {
+    stroke: "#1976d2"
+    stroke-width: 1
+    stroke-dash: 3
+  }
+}
+
+# ====================
+# Mobile App Interactions
+# ====================
+
+mobileApp -> backend: API Requests {
+  style: {
+    stroke: "#0078d4"
+    stroke-width: 3
+  }
+}
+
+mobileApp -> backend: "READ: Product catalog\nREAD: Loyalty profile\n\nCREATE: User account\nCREATE: Cart items\nCREATE: Orders\nCREATE: Loyalty enrollments" {
+  style: {
+    stroke: "#0078d4"
+    stroke-width: 2
+    stroke-dash: 3
+  }
+  tooltip: "Mobile App → Backend Communication\n\nProtocol: REST JSON over HTTPS\nAuth: JWT Bearer tokens\n\nKey Endpoints:\n- GET /products\n- GET /account-loyalty/profile\n- POST /accounts\n- POST /cart\n- POST /orders"
+}
+
+mobileApp -> thirdPartySDK: Integrates {
+  style: {
+    stroke: "#f57c00"
+    stroke-width: 2
+  }
+}
+
+# ====================
+# Backend to eCommerce (Legacy)
+# ====================
+
+backend -> eCommerceLegacy: "⚠️ READ: Product data (CHANGED)\nWRITE: Order data\n⚠️ SYNC: Account data (CHANGED)\nSYNC: Cart data" {
+  style: {
+    stroke: "#7b1fa2"
+    stroke-width: 3
+    stroke-dash: 3
+  }
+  tooltip: "Backend → eCommerce Integration\n\nAS-IS (Legacy):\n- Protocol: XML/SOAP\n- Auth: Basic Authentication\n- Product data: Nested &lt;product&gt; elements\n- Fields: itemId, description\n\nTO-BE (New SaaS):\n- Protocol: REST JSON\n- Auth: OAuth 2.0\n- Product data: Flat JSON objects\n- Fields: sku, name (renamed)\n- New fields: loyaltyId, preferences"
+}
+
+# ====================
+# Backend to Loyalty (Legacy)
+# ====================
+
+backend -> loyaltyLegacy: "⚠️ SYNC: Loyalty data (NEW ATTRS)" {
+  style: {
+    stroke: "#c2185b"
+    stroke-width: 3
+    stroke-dash: 3
+  }
+  tooltip: "Backend → Loyalty Integration\n\nAS-IS (Legacy):\nResponse Schema:\n- customerId\n- points\n- tier\n- lastUpdated\n\nTO-BE (New Platform):\nResponse Schema Enhanced:\n- customerId\n- points\n- tier\n- lastUpdated\n+ rewardBalance\n+ tierExpiryDate\n+ availableRewards[]\n+ pointsHistory[]\n+ preferredRedemption\n+ externalLoyaltyId\n\nRequest schema: unchanged"
+}
+
+# ====================
+# Backend to eCommerce (New) - Hidden by default
+# ====================
+
+backend -> eCommerceNew: {
+  style: {
+    stroke: "#7b1fa2"
+    stroke-width: 3
+    stroke-dash: 3
+    opacity: 0
+  }
+}
+
+# ====================
+# Backend to Loyalty (New) - Hidden by default
+# ====================
+
+backend -> loyaltyNew: {
+  style: {
+    stroke: "#c2185b"
+    stroke-width: 3
+    stroke-dash: 3
+    opacity: 0
+  }
+}
+
+# ====================
+# Backend to CRM (New) - Hidden by default
+# ====================
+
+backend -> crmNew: {
+  style: {
+    stroke: "#00897b"
+    stroke-width: 3
+    stroke-dash: 3
+    opacity: 0
+  }
+}
+
+# ====================
+# Legend
+# ====================
+
+legend: L4 Logical View Legend {
+  near: bottom-center
+  style: {
+    fill: "#f5f5f5"
+    stroke: "#757575"
+    stroke-width: 2
+  }
+
+  componentTypes: "Component Types:" {
+    style: {
+      font-size: 14
+      bold: true
+    }
+  }
+
+  mobile: "  Mobile App (Rectangle)" {
+    style.fill: "#e3f2fd"
+  }
+
+  service: "  Backend Service (Rectangle)" {
+    style.fill: "#50e6ff"
+  }
+
+  external: "  External Systems (Cylinder/Cloud)" {
+    style.fill: "#e8f5e9"
+  }
+
+  operations: "Data Flow Operations:" {
+    style: {
+      font-size: 14
+      bold: true
+    }
+  }
+
+  read: "  READ (Green)" {
+    style.fill: "#c8e6c9"
+  }
+
+  create: "  CREATE (Orange)" {
+    style.fill: "#ffe0b2"
+  }
+
+  sync: "  SYNC (Purple/Pink)" {
+    style.fill: "#d1c4e9"
+  }
+
+  migration: "  ⚠️ = Schema/Protocol Migration" {
+    style: {
+      fill: "#ffecb3"
+      stroke: "#ff6f00"
+      stroke-width: 2
+    }
+  }
+}
+
+# ====================
+# Migration Impact Summary
+# ====================
+
+migrationSummary: {
+  near: top-center
+  label: "TO-BE Migration Impact"
+  shape: rectangle
+  style: {
+    fill: "#fff3e0"
+    stroke: "#e65100"
+    stroke-width: 2
+    opacity: 0
+  }
+
+  change1: "1. eCommerce Platform Migration" {
+    shape: text
+    style.font-size: 13
+  }
+
+  change1a: "   • Product READ: XML → REST JSON" {
+    shape: text
+    style.font-size: 11
+  }
+
+  change1b: "   • Account SYNC: SOAP → REST + OAuth 2.0" {
+    shape: text
+    style.font-size: 11
+  }
+
+  change1c: "   • Field Mapping: itemId→sku, description→name" {
+    shape: text
+    style.font-size: 11
+  }
+
+  change2: "2. Loyalty Platform Migration" {
+    shape: text
+    style.font-size: 13
+  }
+
+  change2a: "   • Response schema: +6 new attributes" {
+    shape: text
+    style.font-size: 11
+  }
+
+  change2b: "   • Enhanced: rewards tracking & history" {
+    shape: text
+    style.font-size: 11
+  }
+
+  change3: "3. New CRM Integration 🆕" {
+    shape: text
+    style.font-size: 13
+  }
+
+  change3a: "   • Account creation replication" {
+    shape: text
+    style.font-size: 11
+  }
+
+  change3b: "   • Payload: emailAddress, contactPreferences" {
+    shape: text
+    style.font-size: 11
+  }
+}
+
+# ====================
+# Scenarios: AS-IS vs TO-BE
+# ====================
+
+scenarios: {
+  asIs: {
+    scenarioNote.label: "L4 Logical Component View - As-Is"
+
+    # Show legacy systems
+    eCommerceLegacy.style.opacity: 1
+    loyaltyLegacy.style.opacity: 1
+
+    # Hide new systems
+    eCommerceNew.class: hidden
+    loyaltyNew.class: hidden
+    crmNew.class: hidden
+
+    # Hide connections to new systems
+    (backend -> eCommerceNew)[*].class: hidden
+    (backend -> loyaltyNew)[*].class: hidden
+    (backend -> crmNew)[*].class: hidden
+
+    # Hide migration summary
+    migrationSummary.class: hidden
+    migrationSummary.*.class: hidden
+  }
+
+  toBe: {
+    scenarioNote: {
+      label: "L4 Logical Component View - To-Be"
+	  link: "https://raw.githubusercontent.com/multani-sandeep/diagrams/refs/heads/public/pub-1/context-l4-logical-asIs.svg"
+    }
+
+    # Fade out legacy systems
+    eCommerceLegacy.class: legacy
+    loyaltyLegacy.class: legacy
+
+    # Show new systems
+    eCommerceNew.style.opacity: 1
+    loyaltyNew.style.opacity: 1
+    crmNew.style.opacity: 1
+
+    # Hide connections to legacy systems
+    (backend -> eCommerceLegacy)[*].class: hidden
+    (backend -> loyaltyLegacy)[*].class: hidden
+
+    # Show connections to new systems
+    backend -> eCommerceNew: "⚠️ READ: Product data (CHANGED)\nWRITE: Order data\n⚠️ SYNC: Account data (CHANGED)\nSYNC: Cart data" {
+      style: {
+        stroke: "#7b1fa2"
+        stroke-width: 3
+        stroke-dash: 3
+      }
+      tooltip: "Backend → New eCommerce Platform\n\nProtocol: REST JSON\nAuth: OAuth 2.0\n\nChanges:\n- Product: Flat JSON (itemId→sku, description→name)\n- Account: OAuth 2.0 (was Basic Auth)\n- New fields: loyaltyId, preferences"
+    }
+
+    backend -> loyaltyNew: "⚠️ SYNC: Loyalty data (NEW ATTRS)" {
+      style: {
+        stroke: "#c2185b"
+        stroke-width: 3
+        stroke-dash: 3
+      }
+      tooltip: "Backend → New Loyalty Platform\n\nNew attributes:\n+ rewardBalance\n+ tierExpiryDate\n+ availableRewards[]\n+ pointsHistory[]\n+ preferredRedemption\n+ externalLoyaltyId\n\nRequest: unchanged"
+    }
+
+    backend -> crmNew: "🆕 CREATE: Account replication" {
+      style: {
+        stroke: "#00897b"
+        stroke-width: 3
+        stroke-dash: 3
+      }
+      tooltip: "Backend → New CRM Platform\n\nTrigger: Account creation event\nProtocol: REST JSON + OAuth 2.0\n\nPayload:\n- emailAddress (required)\n- contactPreferences {\n    marketing, sms, email, push\n  }\n\nPurpose:\n- Customer master data\n- Marketing automation\n- GDPR compliance"
+    }
+
+    # Show migration summary
+    migrationSummary.style.opacity: 1
+  }
+}
